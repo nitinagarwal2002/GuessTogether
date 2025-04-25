@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guess the Word Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      /* Add this to your existing style section */
+      .room-controls {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .danger-btn {
+        background-color: #d9534f;
+      }
+
+      .danger-btn:hover {
+        background-color: #c9302c;
+      }
+      .container {
+        width: 100%;
+        max-width: 600px;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        color: #333;
+        text-align: center;
+      }
+
+      .error-message {
+        color: #d9534f;
+        background-color: #f9e2e2;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        text-align: center;
+        display: none;
+      }
+
+      .success-message {
+        color: #5cb85c;
+        background-color: #dff0d8;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        text-align: center;
+        display: none;
+      }
+
+      #gameSection {
+        text-align: center;
+        display: none;
+      }
+
+      #joinSection {
+        text-align: center;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        background-color: #4caf50;
+        color: white;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+
+      input {
+        padding: 10px;
+        font-size: 16px;
+        margin: 10px 0;
+        width: 80%;
+        max-width: 300px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      #word {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 20px 0;
+        letter-spacing: 5px;
+      }
+
+      #hint {
+        font-size: 18px;
+        margin: 10px 0;
+        font-weight: bold;
+        color: #666;
+      }
+
+      #timer {
+        font-size: 20px;
+        margin: 15px 0;
+        color: #d9534f;
+        font-weight: bold;
+      }
+
+      .scoreboard {
+        margin-top: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+
+      .scoreboard h3 {
+        margin-top: 0;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+        color: #333;
+      }
+
+      .player-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .player-item:last-child {
+        border-bottom: none;
+      }
+
+      .player-name {
+        font-weight: bold;
+      }
+
+      .player-score {
+        font-weight: bold;
+        color: #4caf50;
+      }
+
+      .current-player {
+        background-color: #e8f5e9;
+      }
+
+      .letter-box {
+        display: inline-block;
+        width: 35px;
+        height: 35px;
+        margin: 5px;
+        border: 2px solid #4caf50;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 35px;
+        font-weight: bold;
+        font-size: 20px;
+        background-color: #fff;
+      }
+
+      .revealed {
+        background-color: #e8f5e9;
+      }
+
+      #endMessage {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #f5f5f5;
+        display: none;
+      }
+
+      .winner-message {
+        color: #4caf50;
+        font-weight: bold;
+        font-size: 18px;
+      }
+
+      #roomInfo {
+        background-color: #e8f5e9;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 10px;
+        display: none;
+      }
+
+      #copyButton {
+        background-color: #2196f3;
+        margin-left: 10px;
+      }
+
+      #copyButton:hover {
+        background-color: #0b7dda;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        background-color: #4caf50;
+        color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        display: none;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .notification.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="errorMessage" class="error-message"></div>
+      <div id="successMessage" class="success-message"></div>
+      <div id="notification" class="notification"></div>
+
+      <div id="joinSection">
+        <h2>Guess the Word Game</h2>
+        <p>Enter your name and a room ID to join or create a game room</p>
+        <input
+          type="text"
+          id="username"
+          placeholder="Enter your name"
+          required
+        />
+        <input type="text" id="roomId" placeholder="Enter Room ID" required />
+        <div>
+          <button id="joinBtn" onclick="joinRoom()">Join Room</button>
+          <button id="createBtn" onclick="createRoom()">Create Room</button>
+        </div>
+        <div id="roomInfo">
+          <p>
+            Room created! Share this ID: <span id="roomIdDisplay"></span>
+            <button id="copyButton" onclick="copyRoomId()">Copy</button>
+          </p>
+        </div>
+      </div>
+
+      <div id="gameSection">
+        <h2>Game Room: <span id="currentRoomId"></span></h2>
+        <div id="hint"></div>
+        <div id="word"></div>
+        <div id="timer"></div>
+
+        <input type="text" id="fullGuess" placeholder="Guess the full word" />
+        <button id="guessBtn" onclick="submitFullGuess()">Submit Guess</button>
+        <!-- Add this before the scoreboard div -->
+        <div class="room-controls">
+          <button id="leaveRoomBtn" class="danger-btn" onclick="leaveRoom()">
+            Leave Room
+          </button>
+          <button
+            id="deleteRoomBtn"
+            class="danger-btn"
+            style="display: none"
+            onclick="deleteRoom()"
+          >
+            Delete Room
+          </button>
+        </div>
+        <div id="waitingMessage" style="display: none">
+          <p>Waiting for host to start the game...</p>
+        </div>
+
+        <button
+          id="startBtn"
+          onclick="startGame()"
+          style="display: none; margin-top: 20px"
+        >
+          Start Game
+        </button>
+
+        <div id="endMessage">
+          <p id="gameOverReason"></p>
+          <p>
+            Next game starting in <span id="nextGameTimer">10</span> seconds...
+          </p>
+          <button id="startNextBtn" onclick="startNextGame()">
+            Start Next Game Now
+          </button>
+        </div>
+
+        <div class="scoreboard">
+          <h3>Scoreboard</h3>
+          <div id="players"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Connect to socket with error handling
+      const socket = io({
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 10000,
+      });
+
+      // Global variables
+      let roomId = "";
+      let username = "";
+      let gameStarted = false;
+      let wordToGuess = "";
+      let revealedLetters = [];
+      let isHost = false;
+      let countdownInterval = null;
+      let mySocketId = null;
+
+      // Socket connection event handlers
+      socket.on("connect", () => {
+        mySocketId = socket.id;
+        showSuccess("Connected to server");
+
+        // Re-join room if data exists in localStorage
+        const savedData = JSON.parse(
+          localStorage.getItem("wordGameData") || "{}"
+        );
+        if (savedData.username && savedData.roomId) {
+          username = savedData.username;
+          roomId = savedData.roomId;
+          document.getElementById("username").value = username;
+          document.getElementById("roomId").value = roomId;
+
+          // Auto-rejoin if recently disconnected
+          if (new Date().getTime() - (savedData.timestamp || 0) < 60000) {
+            joinRoom(true);
+          }
+        }
+      });
+
+      socket.on("connect_error", (error) => {
+        showError("Failed to connect to server: " + error.message);
+      });
+
+      socket.on("disconnect", () => {
+        showError("Disconnected from server. Trying to reconnect...");
+
+        // Save current state to allow rejoining
+        if (username && roomId) {
+          localStorage.setItem(
+            "wordGameData",
+            JSON.stringify({
+              username,
+              roomId,
+              timestamp: new Date().getTime(),
+            })
+          );
+        }
+      });
+
+      socket.on("error", ({ message }) => {
+        showError(message);
+      });
+
+      // Room & game related event handlers
+      socket.on("joinedRoom", ({ isHost: host, gameInProgress }) => {
+        isHost = host;
+        document.getElementById("joinSection").style.display = "none";
+        document.getElementById("gameSection").style.display = "block";
+        document.getElementById("currentRoomId").textContent = roomId;
+
+        if (isHost) {
+          document.getElementById("startBtn").style.display = gameInProgress
+            ? "none"
+            : "block";
+          document.getElementById("waitingMessage").style.display = "none";
+        } else {
+          document.getElementById("startBtn").style.display = "none";
+          document.getElementById("waitingMessage").style.display =
+            gameInProgress ? "none" : "block";
+        }
+
+        showNotification(
+          `You've joined room ${roomId}${isHost ? " as host" : ""}`
+        );
+      });
+
+      socket.on("becomeHost", () => {
+        isHost = true;
+        document.getElementById("startBtn").style.display = gameStarted
+          ? "none"
+          : "block";
+        document.getElementById("deleteRoomBtn").style.display = "block";
+        showNotification("You are now the host!");
+      });
+
+      socket.on("playerUpdate", ({ players }) => {
+        updatePlayerList(players);
+      });
+
+      socket.on("waitingForHost", () => {
+        if (!isHost) {
+          document.getElementById("waitingMessage").style.display = "block";
+        }
+      });
+
+      socket.on("gameStarted", (gameData) => {
+        gameStarted = true;
+        document.getElementById("waitingMessage").style.display = "none";
+        document.getElementById("startBtn").style.display = "none";
+        document.getElementById("endMessage").style.display = "none";
+        document.getElementById("fullGuess").disabled = false;
+        document.getElementById("guessBtn").disabled = false;
+
+        wordToGuess = gameData.word;
+        revealedLetters = new Array(wordToGuess.length).fill(null);
+
+        document.getElementById("hint").textContent = `Hint: ${gameData.hint}`;
+        updateWordDisplay();
+
+        showNotification("Game started!");
+      });
+
+      socket.on("timerUpdate", ({ timeLeft }) => {
+        document.getElementById(
+          "timer"
+        ).textContent = `Time Left: ${timeLeft} seconds`;
+
+        // Add warning color if time is running out
+        if (timeLeft <= 30) {
+          document.getElementById("timer").style.color = "#d9534f";
+        } else {
+          document.getElementById("timer").style.color = "#333";
+        }
+      });
+
+      socket.on("revealLetter", () => {
+        const hiddenIndices = [];
+        for (let i = 0; i < wordToGuess.length; i++) {
+          if (revealedLetters[i] === null) {
+            hiddenIndices.push(i);
+          }
+        }
+
+        if (hiddenIndices.length > 0) {
+          const randomIndex =
+            hiddenIndices[Math.floor(Math.random() * hiddenIndices.length)];
+          revealedLetters[randomIndex] = wordToGuess[randomIndex];
+          updateWordDisplay();
+          showNotification("A letter has been revealed!");
+        }
+      });
+
+      socket.on("wordGuessed", ({ word, winner }) => {
+        // Reveal all letters
+        revealedLetters = word.split("");
+        updateWordDisplay();
+
+        document.getElementById("gameOverReason").textContent =
+          winner === username
+            ? "Congratulations! You guessed the word correctly!"
+            : `${winner} guessed the word correctly!`;
+
+        document.getElementById("fullGuess").disabled = true;
+        document.getElementById("guessBtn").disabled = true;
+      });
+
+      socket.on("incorrectGuess", () => {
+        showError("Incorrect guess! Try again.");
+        document.getElementById("fullGuess").value = "";
+      });
+
+      socket.on("timeUp", ({ correctWord }) => {
+        // Reveal the word when time is up
+        revealedLetters = correctWord.split("");
+        updateWordDisplay();
+        document.getElementById(
+          "gameOverReason"
+        ).textContent = `Time's up! The word was "${correctWord}".`;
+
+        document.getElementById("fullGuess").disabled = true;
+        document.getElementById("guessBtn").disabled = true;
+      });
+
+      socket.on("gameOver", () => {
+        gameStarted = false;
+        document.getElementById("endMessage").style.display = "block";
+
+        // Display start next game button only for host
+        document.getElementById("startNextBtn").style.display = isHost
+          ? "block"
+          : "none";
+
+        startNextGameCountdown();
+      });
+
+      // Main functionality
+      function createRoom() {
+        const generatedRoomId = Math.random()
+          .toString(36)
+          .substring(2, 8)
+          .toUpperCase();
+        document.getElementById("roomId").value = generatedRoomId;
+        document.getElementById("roomIdDisplay").textContent = generatedRoomId;
+        document.getElementById("roomInfo").style.display = "block";
+
+        // Don't auto-join yet so user can still modify the username
+        showSuccess(`Room created! ID: ${generatedRoomId}`);
+      }
+
+      function copyRoomId() {
+        const roomIdText = document.getElementById("roomIdDisplay").textContent;
+        navigator.clipboard
+          .writeText(roomIdText)
+          .then(() => showNotification("Room ID copied to clipboard!"))
+          .catch((err) => showError("Failed to copy: " + err));
+      }
+
+      function joinRoom(autoJoin = false) {
+        username = document.getElementById("username").value.trim();
+        roomId = document.getElementById("roomId").value.trim();
+
+        if (!username) {
+          return showError("Please enter your name");
+        }
+
+        if (!roomId) {
+          return showError("Please enter a room ID");
+        }
+
+        // Disable buttons to prevent multiple clicks
+        document.getElementById("joinBtn").disabled = true;
+        document.getElementById("createBtn").disabled = true;
+
+        // Save to localStorage for reconnection
+        localStorage.setItem(
+          "wordGameData",
+          JSON.stringify({
+            username,
+            roomId,
+            timestamp: new Date().getTime(),
+          })
+        );
+
+        socket.emit("joinRoom", { username, roomId });
+
+        // Re-enable buttons after a short delay
+        setTimeout(() => {
+          document.getElementById("joinBtn").disabled = false;
+          document.getElementById("createBtn").disabled = false;
+        }, 2000);
+      }
+
+      function startGame() {
+        if (!isHost) {
+          return showError("Only the host can start the game");
+        }
+
+        socket.emit("startGame", roomId);
+      }
+
+      function submitFullGuess() {
+        const guess = document.getElementById("fullGuess").value.trim();
+        if (!guess) {
+          return showError("Please enter a guess");
+        }
+
+        if (guess.length !== wordToGuess.length) {
+          return showError(
+            `Your guess must be ${wordToGuess.length} letters long`
+          );
+        }
+
+        socket.emit("guessWord", { roomId, guess });
+      }
+
+      function startNextGame() {
+        if (!isHost) {
+          return showError("Only the host can start the next game");
+        }
+
+        clearInterval(countdownInterval);
+        socket.emit("startNextGame", roomId);
+      }
+
+      // Utility functions
+      function updateWordDisplay() {
+        const wordContainer = document.getElementById("word");
+        wordContainer.innerHTML = "";
+
+        for (let i = 0; i < wordToGuess.length; i++) {
+          const letterBox = document.createElement("div");
+          letterBox.className =
+            "letter-box" + (revealedLetters[i] ? " revealed" : "");
+          letterBox.textContent = revealedLetters[i] || "_";
+          wordContainer.appendChild(letterBox);
+        }
+      }
+
+      function updatePlayerList(players) {
+        const playersContainer = document.getElementById("players");
+        playersContainer.innerHTML = "";
+
+        // Sort players by score (highest first)
+        players.sort((a, b) => b.score - a.score);
+
+        players.forEach((player, index) => {
+          const playerDiv = document.createElement("div");
+          playerDiv.className = "player-item";
+
+          if (player.socketId === mySocketId) {
+            playerDiv.classList.add("current-player");
+          }
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "player-name";
+          nameSpan.textContent =
+            player.username +
+            (index === 0 && players.length > 1 ? " (Host)" : "");
+
+          const scoreSpan = document.createElement("span");
+          scoreSpan.className = "player-score";
+          scoreSpan.textContent = player.score;
+
+          playerDiv.appendChild(nameSpan);
+          playerDiv.appendChild(scoreSpan);
+          playersContainer.appendChild(playerDiv);
+        });
+      }
+
+      function startNextGameCountdown() {
+        clearInterval(countdownInterval);
+        let timeLeft = 10;
+        document.getElementById("nextGameTimer").textContent = timeLeft;
+
+        countdownInterval = setInterval(() => {
+          timeLeft -= 1;
+          document.getElementById("nextGameTimer").textContent = timeLeft;
+
+          if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+
+            // Only host automatically starts next game when countdown ends
+            if (isHost) {
+              socket.emit("startNextGame", roomId);
+            }
+          }
+        }, 1000);
+      }
+
+      function showError(message) {
+        const errorElement = document.getElementById("errorMessage");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+
+        setTimeout(() => {
+          errorElement.style.display = "none";
+        }, 5000);
+      }
+
+      function showSuccess(message) {
+        const successElement = document.getElementById("successMessage");
+        successElement.textContent = message;
+        successElement.style.display = "block";
+
+        setTimeout(() => {
+          successElement.style.display = "none";
+        }, 3000);
+      }
+
+      function showNotification(message) {
+        const notification = document.getElementById("notification");
+        notification.textContent = message;
+        notification.style.display = "block";
+
+        // Trigger reflow for animation to work
+        notification.offsetHeight;
+
+        notification.classList.add("show");
+
+        setTimeout(() => {
+          notification.classList.remove("show");
+          setTimeout(() => {
+            notification.style.display = "none";
+          }, 300);
+        }, 3000);
+      }
+
+      // Add event listeners for Enter key
+      document
+        .getElementById("username")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            document.getElementById("roomId").focus();
+          }
+        });
+
+      document
+        .getElementById("roomId")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            joinRoom();
+          }
+        });
+
+      document
+        .getElementById("fullGuess")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            submitFullGuess();
+          }
+        });
+
+      // Initialize event listeners when DOM is loaded
+      document.addEventListener("DOMContentLoaded", function () {
+        // Focus on username field
+        document.getElementById("username").focus();
+
+        // Add input validation for room ID
+        document
+          .getElementById("roomId")
+          .addEventListener("input", function () {
+            // Convert to uppercase for better readability
+            this.value = this.value.toUpperCase();
+          });
+      });
+      // Add these functions to your existing JavaScript
+      function leaveRoom() {
+        if (confirm("Are you sure you want to leave this room?")) {
+          socket.emit("leaveRoom");
+          resetLocalGameState();
+        }
+      }
+
+      function deleteRoom() {
+        if (
+          confirm(
+            "Are you sure you want to delete this room? All players will be disconnected."
+          )
+        ) {
+          socket.emit("deleteRoom");
+          resetLocalGameState();
+        }
+      }
+
+      function resetLocalGameState() {
+        // Clear local storage data
+        localStorage.removeItem("wordGameData");
+
+        // Reset variables
+        roomId = "";
+        username = "";
+        gameStarted = false;
+        wordToGuess = "";
+        revealedLetters = [];
+        isHost = false;
+
+        // Clear any intervals
+        clearInterval(countdownInterval);
+
+        // Switch back to join section
+        document.getElementById("joinSection").style.display = "block";
+        document.getElementById("gameSection").style.display = "none";
+
+        // Reset input fields
+        document.getElementById("username").value = "";
+        document.getElementById("roomId").value = "";
+        document.getElementById("username").focus();
+      }
+
+      // Add these socket event listeners
+      socket.on("leftRoom", () => {
+        showSuccess("You have left the room");
+        resetLocalGameState();
+      });
+
+      socket.on("roomDeleted", () => {
+        showError("The room has been deleted by the host");
+        resetLocalGameState();
+      });
+
+      // Modify the joinedRoom event handler to show/hide delete button
+      socket.on("joinedRoom", ({ isHost: host, gameInProgress }) => {
+        isHost = host;
+        document.getElementById("joinSection").style.display = "none";
+        document.getElementById("gameSection").style.display = "block";
+        document.getElementById("currentRoomId").textContent = roomId;
+
+        // Show/hide host controls
+        document.getElementById("startBtn").style.display =
+          isHost && !gameInProgress ? "block" : "none";
+        document.getElementById("deleteRoomBtn").style.display = isHost
+          ? "block"
+          : "none";
+        document.getElementById("waitingMessage").style.display =
+          !isHost && !gameInProgress ? "block" : "none";
+
+        showNotification(
+          `You've joined room ${roomId}${isHost ? " as host" : ""}`
+        );
+      });
+    </script>
+  </body>
+</html>
